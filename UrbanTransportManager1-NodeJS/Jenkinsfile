@@ -44,8 +44,7 @@ pipeline {
                     additionalArguments: '''
                         --project "UrbanTransportManager1"
                         --scan UrbanTransportManager1-NodeJS
-                        --format XML
-                        --format HTML
+                        --format ALL
                         --out dependency-check-results
                     '''
                 )
