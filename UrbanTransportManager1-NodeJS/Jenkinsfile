@@ -1,3 +1,4 @@
+
 pipeline {
     agent any
 
@@ -32,6 +33,32 @@ pipeline {
             steps {
                 dir('UrbanTransportManager1-NodeJS') {
                     sh 'npm test'
+                }
+            }
+        }
+
+        stage('OWASP Dependency Check') {
+            steps {
+                dependencyCheck(
+                    odcInstallation: 'DependencyCheck',
+                    additionalArguments: '''
+                        --project "UrbanTransportManager1"
+                        --scan UrbanTransportManager1-NodeJS
+                        --format XML
+                        --format HTML
+                        --out dependency-check-results
+                    '''
+                )
+            }
+            post {
+                always {
+                    dependencyCheckPublisher(
+                        pattern: 'dependency-check-results/dependency-check-report.xml'
+                    )
+                    archiveArtifacts(
+                        artifacts: 'dependency-check-results/dependency-check-report.html',
+                        allowEmptyArchive: true
+                    )
                 }
             }
         }
