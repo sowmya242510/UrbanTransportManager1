@@ -1,22 +1,60 @@
 pipeline {
-  agent any
-  tools { nodejs 'NodeJS' }
-  stages {
-    stage('Checkout') { steps { checkout scm } }
-    stage('Validate') { steps { sh 'npm run check' } }
-    stage('Test') { steps { sh 'npm test' } }
-    stage('SonarQube Analysis') {
-      steps {
-        withSonarQubeEnv('SonarQube') {
-          script {
-            def scannerHome = tool 'SonarQubeScanner'
-            sh "${scannerHome}/bin/sonar-scanner"
-          }
+    agent any
+
+    tools {
+        nodejs 'NodeJS'
+    }
+
+    stages {
+        stage('Checkout') {
+            steps {
+                checkout scm
+            }
         }
-      }
+
+        stage('Install Dependencies') {
+            steps {
+                dir('UrbanTransportManager1-NodeJS') {
+                    sh 'npm install'
+                }
+            }
+        }
+
+        stage('Validate') {
+            steps {
+                dir('UrbanTransportManager1-NodeJS') {
+                    sh 'npm run check'
+                }
+            }
+        }
+
+        stage('Test') {
+            steps {
+                dir('UrbanTransportManager1-NodeJS') {
+                    sh 'npm test'
+                }
+            }
+        }
+
+        stage('SonarQube Analysis') {
+            steps {
+                dir('UrbanTransportManager1-NodeJS') {
+                    withSonarQubeEnv('SonarQube') {
+                        script {
+                            def scannerHome = tool 'SonarScanner'
+                            sh "${scannerHome}/bin/sonar-scanner"
+                        }
+                    }
+                }
+            }
+        }
+
+        stage('Quality Gate') {
+            steps {
+                timeout(time: 5, unit: 'MINUTES') {
+                    waitForQualityGate abortPipeline: true
+                }
+            }
+        }
     }
-    stage('Quality Gate') {
-      steps { timeout(time: 5, unit: 'MINUTES') { waitForQualityGate abortPipeline: true } }
-    }
-  }
 }
