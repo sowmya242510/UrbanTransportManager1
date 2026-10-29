@@ -1,3 +1,4 @@
+
 pipeline {
     agent any
 
@@ -38,18 +39,25 @@ pipeline {
 
         stage('OWASP Dependency Check') {
             steps {
-                // Create the output directory before scanning
                 sh 'mkdir -p dependency-check-results'
 
-                dependencyCheck(
-                    odcInstallation: 'DependencyCheck',
-                    additionalArguments: '''
-                        --project "UrbanTransportManager1"
-                        --scan UrbanTransportManager1-NodeJS
-                        --format ALL
-                        --out dependency-check-results
-                    '''
-                )
+                withCredentials([
+                    string(
+                        credentialsId: 'nvd-api-key',
+                        variable: 'NVD_API_KEY'
+                    )
+                ]) {
+                    dependencyCheck(
+                        odcInstallation: 'DependencyCheck',
+                        additionalArguments: '''
+                            --project "UrbanTransportManager1"
+                            --scan UrbanTransportManager1-NodeJS
+                            --format ALL
+                            --out dependency-check-results
+                            --nvdApiKey "$NVD_API_KEY"
+                        '''
+                    )
+                }
             }
 
             post {
